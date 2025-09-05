@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
-  }
+    "paths": { "@/*": ["./src/*"] },
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["src/**/*.js", "src/**/*.jsx", "vite.config.js"],
+  "exclude": ["node_modules", "dist"]
 }
