@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import Logo from './Logo.jsx';
 import LogoIcon from './LogoIcon.jsx';
 import Dashboard from './Dashboard.jsx';
+import LogoEUT from '../images/EUTLogo';
+import FlamaSantander from '../images/FlamaSantander';
 
 export function SidebarDemo() {
 	// …imports
@@ -29,7 +31,7 @@ export function SidebarDemo() {
 				setOpen={setOpen}>
 				<SidebarBody className='justify-between gap-10'>
 					<div className='flex flex-1 flex-col overflow-x-hidden overflow-y-auto'>
-						{open ? <Logo /> : <LogoIcon />}
+						{open ? <LogoEUT size={60} /> : <FlamaSantander size={30} />}
 						<div className='mt-8 flex flex-col gap-2'>
 							{links.map((link, idx) => (
 								<SidebarLink
