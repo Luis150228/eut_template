@@ -23,9 +23,6 @@ export const SidebarProvider = ({ children, open: openProp, setOpen: setOpenProp
 	);
 };
 
-/**
- * Wrapper de conveniencia para no tener que montar el Provider afuera.
- */
 export const Sidebar = ({ children, open, setOpen, animate = true }) => {
 	return (
 		<SidebarProvider
@@ -37,9 +34,6 @@ export const Sidebar = ({ children, open, setOpen, animate = true }) => {
 	);
 };
 
-/**
- * Cuerpo que pinta versión desktop y mobile.
- */
 export const SidebarBody = (props) => (
 	<>
 		<DesktopSidebar {...props} />
@@ -48,9 +42,10 @@ export const SidebarBody = (props) => (
 );
 
 /**
- * Sidebar en escritorio con “hover to open”.
- * - Sin botón. Abre al pasar el mouse; cierra al salir.
- * - FIX: el contenedor de children es ahora flex-col para que `mt-auto` funcione.
+ * Desktop con “hover to open”.
+ * CAMBIOS:
+ *  - Fondo: light = tu neutral, dark = rojo via var.
+ *  - Color de texto/iconos: 1 sola variable (var(--sidebar-fg)).
  */
 export const DesktopSidebar = ({ className, children, ...props }) => {
 	const { open, animate, peekOpen, setPeekOpen } = useSidebar();
@@ -59,7 +54,10 @@ export const DesktopSidebar = ({ className, children, ...props }) => {
 	return (
 		<motion.aside
 			className={cn(
-				'h-full px-3 py-3 hidden md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-[300px] shrink-0',
+				// bg en dark ahora viene de variable roja
+				'h-full px-3 py-3 hidden md:flex md:flex-col bg-neutral-100 dark:bg-[var(--sidebar-bg)] w-[300px] shrink-0',
+				// color “currentColor” para texto+iconos
+				'text-[var(--sidebar-fg)]',
 				className
 			)}
 			onMouseEnter={() => setPeekOpen(true)}
@@ -67,15 +65,13 @@ export const DesktopSidebar = ({ className, children, ...props }) => {
 			animate={{ width: animate ? (isOpen ? 300 : 60) : 300 }}
 			transition={{ duration: 0.25, ease: 'easeInOut' }}
 			{...props}>
-			{/* FIX: este wrapper ahora es flex-col para soportar `mt-auto` en el último bloque (user card) */}
 			<div className='flex flex-1 flex-col overflow-y-auto min-h-0'>{children}</div>
 		</motion.aside>
 	);
 };
 
 /**
- * Sidebar en mobile (overlay con AnimatePresence).
- * - FIX: también aquí el wrapper interior es flex-col por si usas `mt-auto` en el user card.
+ * Mobile overlay (mismo criterio de color).
  */
 export const MobileSidebar = ({ className, children, ...props }) => {
 	const { open, setOpen } = useSidebar();
@@ -83,11 +79,12 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 	return (
 		<div
 			className={cn(
-				'h-10 px-4 py-4 flex md:hidden items-center justify-between bg-neutral-100 dark:bg-neutral-800 w-full',
+				// top bar en mobile: mismo color que desktop
+				'h-10 px-4 py-4 flex md:hidden items-center justify-between bg-neutral-100 dark:bg-[var(--sidebar-bg)] w-full',
+				'text-[var(--sidebar-fg)]',
 				className
 			)}
 			{...props}>
-			{/* Botón hamburguesa en mobile */}
 			<div className='flex justify-end z-20 w-full'>
 				<button
 					type='button'
@@ -95,8 +92,7 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 					onClick={() => setOpen(!open)}
 					className={cn(
 						'inline-flex items-center justify-center rounded-md p-2',
-						'hover:bg-neutral-200 dark:hover:bg-neutral-700 transition',
-						'text-neutral-800 dark:text-neutral-200'
+						'hover:bg-neutral-200/60 dark:hover:bg-black/10 transition'
 					)}>
 					{open ? <IconX size={18} /> : <IconMenu2 size={18} />}
 				</button>
@@ -110,7 +106,9 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 						exit={{ x: '-100%', opacity: 0 }}
 						transition={{ duration: 0.25, ease: 'easeInOut' }}
 						className={cn(
-							'fixed inset-0 h-full w-full bg-white dark:bg-neutral-900 p-10 z-[100] flex flex-col justify-between'
+							// overlay en dark: rojo; en light: blanco (se ve bien con tu contenido)
+							'fixed inset-0 h-full w-full bg-white dark:bg-[var(--sidebar-bg)] p-10 z-[100] flex flex-col justify-between',
+							'text-[var(--sidebar-fg)]'
 						)}>
 						<div className='absolute right-4 top-4'>
 							<button
@@ -119,14 +117,12 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 								onClick={() => setOpen(false)}
 								className={cn(
 									'inline-flex items-center justify-center rounded-md p-2',
-									'hover:bg-neutral-200 dark:hover:bg-neutral-700 transition',
-									'text-neutral-800 dark:text-neutral-200'
+									'hover:bg-neutral-200/60 dark:hover:bg-black/10 transition'
 								)}>
 								<IconX size={18} />
 							</button>
 						</div>
 
-						{/* FIX: flex-col para soportar `mt-auto` del user card en mobile */}
 						<div className='mt-8 flex flex-1 flex-col overflow-y-auto min-h-0'>{children}</div>
 					</motion.div>
 				)}
@@ -136,8 +132,7 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 };
 
 /**
- * Link del sidebar (colapsa el label cuando está cerrado).
- * Usa open || peekOpen para decidir si muestra el texto.
+ * Link del sidebar (texto+iconos usan currentColor => heredan var(--sidebar-fg)).
  */
 export const SidebarLink = ({ link, className = '', ...props }) => {
 	const { open, animate, peekOpen } = useSidebar();
@@ -146,7 +141,12 @@ export const SidebarLink = ({ link, className = '', ...props }) => {
 	return (
 		<a
 			href={link.href}
-			className={cn('flex items-center justify-start gap-2 group/sidebar py-2', className)}
+			className={cn(
+				'flex items-center justify-start gap-2 group/sidebar py-2',
+				// fuerza color en el enlace (iconos Tabler heredan currentColor)
+				'text-[var(--sidebar-fg)]',
+				className
+			)}
 			{...props}>
 			{link.icon}
 			<motion.span
@@ -157,7 +157,7 @@ export const SidebarLink = ({ link, className = '', ...props }) => {
 				}}
 				transition={{ duration: 0.2, ease: 'easeInOut' }}
 				className={cn(
-					'text-neutral-700 dark:text-neutral-200 text-sm transition-[opacity,width] duration-200 whitespace-pre inline-block !p-0 !m-0',
+					'text-sm transition-[opacity,width] duration-200 whitespace-pre inline-block !p-0 !m-0',
 					isOpen ? 'ml-1' : 'ml-0 overflow-hidden'
 				)}>
 				{link.label}
