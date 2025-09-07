@@ -10,6 +10,7 @@ import {
 	IconBoxAlignTopLeft,
 	IconBoxAlignRightFilled,
 } from '@tabler/icons-react';
+import FlamaSantanderLoader from '../images/FlamaSantanderLoader';
 
 const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
@@ -68,7 +69,12 @@ const items = [
 	{
 		title: 'Stock de Almacen',
 		description: 'Stock de equipos asignados a mi almacén.',
-		header: <Skeleton />,
+		header: (
+			<FlamaSantanderLoader
+				size={50}
+				duration={10}
+			/>
+		),
 		icon: ICON(IconClipboardCopy),
 		// span: 'full', // ← ocupa todo el renglón
 		// opcional: altura grande,
