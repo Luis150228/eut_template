@@ -9,7 +9,7 @@ import Dashboard from './Dashboard.jsx';
 import LogoEUT from '../images/EUTLogo';
 import FlamaSantander from '../images/FlamaSantander';
 
-export function SidebarDemo() {
+export function SidebarEUT() {
 	// …imports
 	const links = [
 		{ label: 'Dashboard', href: '#', icon: <IconBrandTabler className='h-5 w-5 shrink-0' /> },
@@ -22,7 +22,7 @@ export function SidebarDemo() {
 	return (
 		<div
 			className={cn(
-				'mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-hidden rounded-md border border-neutral-200 bg-gray-100 md:flex-row dark:border-neutral-700 dark:bg-neutral-800',
+				'mx-auto flex w-full max-w-[95vw] flex-1 flex-col overflow-hidden rounded-md border border-neutral-200 bg-gray-100 md:flex-row dark:border-neutral-700 dark:bg-neutral-800',
 				// for your use case, use `h-screen` instead of `h-[60vh]`
 				'h-[90vh]'
 			)}>
@@ -44,14 +44,14 @@ export function SidebarDemo() {
 					<div>
 						<SidebarLink
 							link={{
-								label: 'Manu Arora',
+								label: 'Luis Fernando Rangel',
 								href: '#',
 								icon: (
 									<img
-										src='https://assets.aceternity.com/manu.png'
+										src='./avatar/C356882Avatar.jpeg'
 										className='h-7 w-7 shrink-0 rounded-full'
-										width={50}
-										height={50}
+										width={60}
+										height={60}
 										alt='Avatar'
 									/>
 								),

@@ -1,18 +1,53 @@
 import React from 'react';
 import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
+import { cn } from '@/lib/utils';
 import {
-	IconArrowWaveRightUp,
-	IconBoxAlignRightFilled,
-	IconBoxAlignTopLeft,
 	IconClipboardCopy,
 	IconFileBroken,
 	IconSignature,
 	IconTableColumn,
+	IconArrowWaveRightUp,
+	IconBoxAlignTopLeft,
+	IconBoxAlignRightFilled,
 } from '@tabler/icons-react';
+
+const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
+const Skeleton = () => (
+	<div className='h-full w-full min-h-[6rem] rounded-xl bg-gradient-to-br from-neutral-200 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800' />
+);
+
+// 1) Mapa de tamaños → clases Tailwind
+const spanClass = (span) => {
+	switch (span) {
+		case 'full':
+			return 'col-span-full md:col-span-12';
+		case 'half':
+			return 'md:col-span-6';
+		case 'third':
+			return 'md:col-span-4';
+		case 'quarter':
+			return 'md:col-span-3';
+		case 'tall':
+			return 'row-span-2'; // el alto duplica
+		case 'half-tall':
+			return 'md:col-span-6 row-span-2';
+		case 'full-tall':
+			return 'col-span-full md:col-span-12 row-span-2 h-full';
+		default:
+			return '';
+	}
+};
 
 export function BentoGridDemo() {
 	return (
-		<BentoGrid className='max-w-4xl mx-auto'>
+		<BentoGrid
+			className={cn(
+				// ancho y grid base
+				'mx-auto w-full max-w-screen-2xl',
+				'grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[12rem]',
+				// opcional: rellena huecos si usas muchas alturas distintas
+				'grid-flow-row-dense'
+			)}>
 			{items.map((item, i) => (
 				<BentoGridItem
 					key={i}
@@ -20,62 +55,35 @@ export function BentoGridDemo() {
 					description={item.description}
 					header={item.header}
 					icon={item.icon}
-					className={`enter ${i === 3 || i === 6 ? 'md:col-span-2' : ''}`}
-					style={{ animationDelay: `${i * 120}ms` }}
+					className={cn('min-w-0', spanClass(item.span), item.className)}
 				/>
 			))}
 		</BentoGrid>
 	);
 }
 
-const Skeleton = () => (
-	<div className='flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-neutral-200 dark:from-neutral-900 dark:to-neutral-800 to-neutral-100'></div>
-);
-
-// Reusa la variable de marca definida en :root  ->  --brand-red
-const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
-
+// 2) Data: decide por item cuánto ocupa
 const items = [
+	// Ejemplo 1: una card "full" (las demás bajan de fila)
 	{
 		title: 'Stock de Almacen',
-		description: 'Stock de equipos Asignados a mi almacen.',
+		description: 'Stock de equipos asignados a mi almacén.',
 		header: <Skeleton />,
 		icon: ICON(IconClipboardCopy),
+		// span: 'full', // ← ocupa todo el renglón
+		// opcional: altura grande,
+		span: 'full-tall',
 	},
-	{
-		title: 'The Digital Revolution',
-		description: 'Dive into the transformative power of technology.',
-		header: <Skeleton />,
-		icon: ICON(IconFileBroken),
-	},
-	{
-		title: 'The Art of Design',
-		description: 'Discover the beauty of thoughtful and functional design.',
-		header: <Skeleton />,
-		icon: ICON(IconSignature),
-	},
-	{
-		title: 'The Power of Communication',
-		description: 'Understand the impact of effective communication in our lives.',
-		header: <Skeleton />,
-		icon: ICON(IconTableColumn),
-	},
-	{
-		title: 'The Pursuit of Knowledge',
-		description: 'Join the quest for understanding and enlightenment.',
-		header: <Skeleton />,
-		icon: ICON(IconArrowWaveRightUp),
-	},
-	{
-		title: 'The Joy of Creation',
-		description: 'Experience the thrill of bringing ideas to life.',
-		header: <Skeleton />,
-		icon: ICON(IconBoxAlignTopLeft),
-	},
-	{
-		title: 'The Spirit of Adventure',
-		description: 'Embark on exciting journeys and thrilling discoveries.',
-		header: <Skeleton />,
-		icon: ICON(IconBoxAlignRightFilled),
-	},
+
+	// Estas caerán a la fila siguiente automáticamente
+	{ title: 'The Digital Revolution', header: <Skeleton />, icon: ICON(IconFileBroken), span: 'half-tall' },
+	{ title: 'The Art of Design', header: <Skeleton />, icon: ICON(IconSignature), span: 'half' },
+
+	// Otra fila: 3 columnas iguales
+	{ title: 'Power of Communication', header: <Skeleton />, icon: ICON(IconTableColumn), span: 'third' },
+	{ title: 'Pursuit of Knowledge', header: <Skeleton />, icon: ICON(IconArrowWaveRightUp), span: 'third' },
+	{ title: 'Joy of Creation', header: <Skeleton />, icon: ICON(IconBoxAlignTopLeft), span: 'third' },
+
+	// Alta y angosta
+	{ title: 'Spirit of Adventure', header: <Skeleton />, icon: ICON(IconBoxAlignRightFilled), span: 'third' },
 ];

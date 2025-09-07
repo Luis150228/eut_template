@@ -1,10 +1,5 @@
 // FlamaSantander.jsx
-export default function FlamaSantander({
-	size = 220, // ancho en px
-	color = '#e30613', // color de relleno/contorno
-	className = '',
-	...props
-}) {
+export default function FlamaSantander({ size = 220, color = '#e30613', className = '', ...props }) {
 	return (
 		<svg
 			viewBox='0 0 514.91 461.72'
