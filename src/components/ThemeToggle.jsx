@@ -1,34 +1,52 @@
-import { useEffect, useState } from 'react';
+import * as React from 'react';
 
-export default function ThemeToggle({ className = '' }) {
-	const [mode, setMode] = useState('light');
+const STORAGE_KEY_THEME = 'eut.theme';
 
-	useEffect(() => {
-		const saved = localStorage.getItem('theme');
-		const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-		const initial = saved || (prefersDark ? 'dark' : 'light');
-		setMode(initial);
-		document.documentElement.classList.toggle('dark', initial === 'dark');
-	}, []);
+function getStoredTheme() {
+	if (typeof window === 'undefined') return null;
+	try {
+		return localStorage.getItem(STORAGE_KEY_THEME);
+	} catch {
+		return null;
+	}
+}
 
-	const toggle = () => {
-		const next = mode === 'dark' ? 'light' : 'dark';
-		setMode(next);
-		document.documentElement.classList.toggle('dark', next === 'dark');
-		localStorage.setItem('theme', next);
-	};
+function applyTheme(theme) {
+	const root = document.documentElement;
+	if (theme === 'dark') root.classList.add('dark');
+	else root.classList.remove('dark');
+	// opcional: atributo para debugging/CSS
+	root.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+}
+
+export default function ThemeToggle() {
+	const [theme, setTheme] = React.useState(() => {
+		const stored = getStoredTheme();
+		if (stored) return stored;
+		// fallback: preferencia del sistema
+		if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+			return 'dark';
+		}
+		return 'light';
+	});
+
+	React.useEffect(() => {
+		applyTheme(theme);
+		try {
+			localStorage.setItem(STORAGE_KEY_THEME, theme);
+		} catch {}
+	}, [theme]);
+
+	const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
 	return (
 		<button
+			type='button'
 			onClick={toggle}
-			className={
-				'px-3 py-2 rounded-md border text-sm ' +
-				'bg-[var(--sidebar-bg)] text-[var(--sidebar-fg)] ' + // se integra al esquema de colores
-				className
-			}
+			className='rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm'
 			aria-label='Cambiar tema'
 			title='Cambiar tema'>
-			{mode === 'dark' ? 'Light' : 'Dark'}
+			{theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
 		</button>
 	);
 }

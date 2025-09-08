@@ -2,34 +2,25 @@ import { cn } from '@/lib/utils';
 import { IconMaximize, IconX } from '@tabler/icons-react';
 
 export const BentoGrid = ({ className, children }) => {
+	// Grid ancho completo, sin centrado ni max-w internos
 	return (
-		<div className={cn('mx-auto grid max-w-7xl grid-cols-1 gap-4 md:auto-rows-[18rem] md:grid-cols-3', className)}>
-			{children}
-		</div>
+		<div className={cn('grid w-full grid-cols-1 gap-4 md:auto-rows-[18rem] md:grid-cols-3', className)}>{children}</div>
 	);
 };
 
-export const BentoGridItem = ({
-	className,
-	title,
-	description,
-	header,
-	icon,
-	onToggleSize, // opcional (sin lógica por ahora)
-	onClose, // opcional (sin lógica por ahora)
-}) => {
+export const BentoGridItem = ({ className, title, description, header, icon, onToggleSize, onClose, ...rest }) => {
+	const dataAttrs = pickDataAria(rest);
 	return (
 		<div
+			{...dataAttrs}
 			className={cn(
-				'group/bento relative row-span-1 flex flex-col justify-between space-y-4',
-				'rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 pb-12', // pb extra para la barra inferior
+				'group/bento relative row-span-1 flex min-h-0 flex-col justify-between space-y-4',
+				'rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 pb-12',
 				'transition duration-200 hover:shadow-xl shadow-sm',
 				className
 			)}>
-			{/* Contenido superior / header */}
 			{header}
 
-			{/* Texto (con el micro desplazamiento en hover que ya tenías) */}
 			<div className='transition duration-200 group-hover/bento:translate-x-2'>
 				<div className='mt-2 mb-2 font-sans font-bold text-[var(--foreground)]/80'>{title}</div>
 				{description && (
@@ -37,13 +28,9 @@ export const BentoGridItem = ({
 				)}
 			</div>
 
-			{/* BARRA INFERIOR: icono izq + acciones der */}
 			<div className='pointer-events-none absolute inset-x-3 bottom-3'>
 				<div className='flex items-center justify-between'>
-					{/* Icono principal (el que ya pasas) */}
 					<div className='pointer-events-auto'>{icon}</div>
-
-					{/* Acciones derechas (solo UI por ahora) */}
 					<div className='pointer-events-auto flex items-center gap-2'>
 						<IconButton
 							aria-label='Cambiar tamaño'
@@ -62,7 +49,6 @@ export const BentoGridItem = ({
 	);
 };
 
-/* — helpers — */
 function IconButton({ className, children, ...props }) {
 	return (
 		<button
@@ -73,10 +59,15 @@ function IconButton({ className, children, ...props }) {
 				'border border-[var(--border)] bg-[var(--card)]/80 backdrop-blur',
 				'px-2.5 py-1.5 text-[var(--foreground)]',
 				'hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition shadow-sm',
-				'focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--foreground)]/20',
+				'focus:outline-none focus:ring-2 focus:ring-[var(--foreground)]/20',
 				className
 			)}>
 			{children}
 		</button>
 	);
+}
+function pickDataAria(obj) {
+	const out = {};
+	for (const k in obj) if (k.startsWith('data-') || k.startsWith('aria-')) out[k] = obj[k];
+	return out;
 }
