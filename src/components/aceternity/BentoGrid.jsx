@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
 import { cn } from '@/lib/utils';
 import {
@@ -16,13 +16,14 @@ import EUTLineChart from '../charts/EUTLineChart';
 import TablaDraw from '../tables/tableDrawing';
 import FlowbiteForm from '../forms/FlowbiteForm';
 
-const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
+import useHiddenCards from '@/hooks/useHiddenCards';
+import useCardSpans, { nextSpan } from '@/hooks/useCardSpans';
 
+const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
 	<div className='h-full w-full min-h-[6rem] rounded-xl bg-gradient-to-br from-neutral-200 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800' />
 );
 
-/* Tamaños → clases */
 const spanClass = (span) => {
 	switch (span) {
 		case 'full':
@@ -43,48 +44,7 @@ const spanClass = (span) => {
 			return '';
 	}
 };
-const SPAN_ORDER = ['quarter', 'third', 'half', 'tall', 'half-tall', 'full', 'full-tall'];
-const nextSpan = (cur) => {
-	const i = SPAN_ORDER.indexOf(cur);
-	return i === -1 ? SPAN_ORDER[0] : SPAN_ORDER[(i + 1) % SPAN_ORDER.length];
-};
 
-/* Persistencia */
-export const STORAGE_KEY_SPANS = 'eut.cardSpans.v1';
-export const STORAGE_KEY_HIDDEN = 'eut.cardHidden.v1';
-
-export function loadSpanMap() {
-	try {
-		return JSON.parse(localStorage.getItem(STORAGE_KEY_SPANS) || '{}');
-	} catch {
-		return {};
-	}
-}
-function saveSpan(id, span) {
-	if (!id) return;
-	const map = loadSpanMap();
-	map[id] = span;
-	try {
-		localStorage.setItem(STORAGE_KEY_SPANS, JSON.stringify(map));
-	} catch {}
-}
-export function loadHiddenSet() {
-	try {
-		const arr = JSON.parse(localStorage.getItem(STORAGE_KEY_HIDDEN) || '[]');
-		return new Set(Array.isArray(arr) ? arr : []);
-	} catch {
-		return new Set();
-	}
-}
-export function saveHiddenSet(set) {
-	try {
-		localStorage.setItem(STORAGE_KEY_HIDDEN, JSON.stringify([...set]));
-		// 🔔 Notificar a quien escuche (Sidebar, Grid, etc.)
-		window.dispatchEvent(new Event('eut:hidden:changed'));
-	} catch {}
-}
-
-/* Loader para header */
 const HeaderLoader = () => (
 	<LoaderBackdrop>
 		<FlamaSantanderLoader
@@ -95,7 +55,7 @@ const HeaderLoader = () => (
 	</LoaderBackdrop>
 );
 
-/* Catálogo base con data-id */
+/* — catálogo actual (con headers) — */
 export function getBaseItems() {
 	return [
 		{
@@ -169,37 +129,18 @@ export function getBaseItems() {
 		},
 	];
 }
-function applySavedSpans(items) {
-	const map = loadSpanMap();
-	return items.map((it) => (map[it['data-id']] ? { ...it, span: map[it['data-id']] } : it));
-}
 
 export function BentoGridEUT() {
-	// estado inicial: catálogo con spans guardados, filtrado por ocultas actuales
-	const [items, setItems] = useState(() => {
-		const hidden = loadHiddenSet();
-		return applySavedSpans(getBaseItems()).filter((it) => !hidden.has(it['data-id']));
-	});
+	const { hiddenIds, hideOne, clearAll } = useHiddenCards();
+	const { getSpan, setSpan } = useCardSpans();
 
-	// 🔁 Suscríbete a cambios de ocultas (Sidebar u otros tabs) y refresca al vuelo
-	useEffect(() => {
-		const refreshFromStorage = () => {
-			const hidden = loadHiddenSet();
-			const next = applySavedSpans(getBaseItems()).filter((it) => !hidden.has(it['data-id']));
-			setItems(next);
-		};
-		window.addEventListener('eut:hidden:changed', refreshFromStorage);
-		const onStorage = (e) => {
-			if (e.key === STORAGE_KEY_HIDDEN) refreshFromStorage();
-		};
-		window.addEventListener('storage', onStorage);
-		return () => {
-			window.removeEventListener('eut:hidden:changed', refreshFromStorage);
-			window.removeEventListener('storage', onStorage);
-		};
-	}, []);
+	// aplica spans guardados y filtra ocultas en cada render
+	const items = useMemo(() => {
+		return getBaseItems()
+			.map((it) => ({ ...it, span: getSpan(it['data-id'], it.span) }))
+			.filter((it) => !hiddenIds.includes(it['data-id']));
+	}, [hiddenIds, getSpan]);
 
-	// Loading (demo)
 	const [loadingIdx, setLoadingIdx] = useState(new Set());
 	const setCardLoading = (idx, on) =>
 		setLoadingIdx((prev) => {
@@ -207,6 +148,7 @@ export function BentoGridEUT() {
 			on ? next.add(idx) : next.delete(idx);
 			return next;
 		});
+
 	const loaderOnElement = async () => {
 		const idx = 0;
 		setCardLoading(idx, true);
@@ -217,41 +159,6 @@ export function BentoGridEUT() {
 		}
 	};
 
-	// Cambiar tamaño (persistente)
-	const handleToggleSize = (idx) => {
-		setItems((prev) =>
-			prev.map((it, i) => {
-				if (i !== idx) return it;
-				const id = it['data-id'];
-				const newSpan = nextSpan(it.span);
-				saveSpan(id, newSpan);
-				return { ...it, span: newSpan };
-			})
-		);
-	};
-
-	// Cerrar (persistente + emite evento → Sidebar y Grid lo oyen)
-	const handleClose = (idx) => {
-		setItems((prev) => {
-			const it = prev[idx];
-			const id = it?.['data-id'];
-			if (id) {
-				const set = loadHiddenSet();
-				set.add(id);
-				saveHiddenSet(set); // emite 'eut:hidden:changed'
-			}
-			const next = [...prev];
-			next.splice(idx, 1);
-			return next;
-		});
-	};
-
-	// Botón: reabrir todas
-	const handleRestoreAll = () => {
-		saveHiddenSet(new Set()); // emite evento
-		setItems(applySavedSpans(getBaseItems()));
-	};
-
 	return (
 		<>
 			<div className='mt-4 flex items-center justify-between gap-3'>
@@ -260,9 +167,8 @@ export function BentoGridEUT() {
 					className='rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-[var(--foreground)]'>
 					Actualizar element
 				</button>
-
 				<button
-					onClick={handleRestoreAll}
+					onClick={clearAll}
 					className='rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--foreground)]'>
 					Reabrir cerradas
 				</button>
@@ -272,9 +178,10 @@ export function BentoGridEUT() {
 				className={cn('w-full', 'grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[12rem]', 'grid-flow-row-dense')}>
 				{items.map((item, i) => {
 					const { span, className: cls, header, title, description, icon, ...dataRest } = item;
+					const id = item['data-id'];
 					return (
 						<BentoGridItem
-							key={item['data-id'] || i}
+							key={id || i}
 							{...dataRest}
 							title={title}
 							description={description}
@@ -282,8 +189,8 @@ export function BentoGridEUT() {
 								<div className='h-full min-h-0 overflow-hidden'>{loadingIdx.has(i) ? <HeaderLoader /> : header}</div>
 							}
 							icon={icon}
-							onToggleSize={() => handleToggleSize(i)}
-							onClose={() => handleClose(i)}
+							onToggleSize={() => setSpan(id, nextSpan(span))}
+							onClose={() => hideOne(id)}
 							className={cn('min-w-0', spanClass(span), cls)}
 						/>
 					);

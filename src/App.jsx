@@ -1,5 +1,5 @@
 import './App.css';
-import { SidebarEUT } from './components/aceternity/Sidebar';
+import { SidebarEUT } from './components/aceternity/SidebarEUT';
 import { GradientText } from './components/animate-ui/text/gradient';
 import ThemeToggle from './components/ThemeToggle';
 
