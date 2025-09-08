@@ -12,6 +12,8 @@ import {
 } from '@tabler/icons-react';
 import FlamaSantanderLoader from '../images/FlamaSantanderLoader';
 import LoaderBackdrop from '../images/LoaderBackdrop';
+import EUTLineChart from '../charts/EUTLineChart';
+import TablaDraw from '../tables/tableDrawing';
 
 const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
@@ -49,8 +51,35 @@ const items = [
 		icon: ICON(IconClipboardCopy),
 		span: 'half-tall',
 	},
-	{ title: 'The Digital Revolution', header: <Skeleton />, icon: ICON(IconFileBroken), span: 'half-tall' },
-	{ title: 'The Art of Design', header: <Skeleton />, icon: ICON(IconSignature), span: 'half' },
+	{
+		title: 'Grafica de Ejemplo Apache ECharts',
+		header: (
+			<EUTLineChart
+				title='Stock semanal'
+				categories={['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']}
+				series={[
+					{ name: 'Entradas', data: [12, 18, 10, 14, 9, 13, 11] },
+					{ name: 'Salidas', data: [10, 12, 8, 16, 7, 12, 9] },
+				]}
+				height={400} // ajusta a tu tile (half-tall suele ir bien con ~240–280px)
+				smooth
+			/>
+		),
+		// icon: ICON(IconFileBroken),
+		span: 'half-tall',
+	},
+	{
+		title: 'Tabla de Ejemplo',
+		header: <TablaDraw />,
+		icon: ICON(IconSignature),
+		span: 'half',
+	},
+	{
+		title: 'The Art of Design',
+		header: <Skeleton />,
+		icon: ICON(IconSignature),
+		span: 'half',
+	},
 	{ title: 'Power of Communication', header: <Skeleton />, icon: ICON(IconTableColumn), span: 'third' },
 	{ title: 'Pursuit of Knowledge', header: <Skeleton />, icon: ICON(IconArrowWaveRightUp), span: 'third' },
 	{ title: 'Joy of Creation', header: <Skeleton />, icon: ICON(IconBoxAlignTopLeft), span: 'third' },
