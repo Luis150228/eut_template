@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BentoGrid, BentoGridItem } from '../ui/bento-grid';
 import { cn } from '@/lib/utils';
 import {
@@ -79,7 +79,7 @@ export function loadHiddenSet() {
 export function saveHiddenSet(set) {
 	try {
 		localStorage.setItem(STORAGE_KEY_HIDDEN, JSON.stringify([...set]));
-		// 🔔 Notifica a Sidebar (y a otros listeners) que cambió la lista
+		// 🔔 Notificar a quien escuche (Sidebar, Grid, etc.)
 		window.dispatchEvent(new Event('eut:hidden:changed'));
 	} catch {}
 }
@@ -175,12 +175,31 @@ function applySavedSpans(items) {
 }
 
 export function BentoGridEUT() {
-	const hidden = loadHiddenSet();
-	const base = applySavedSpans(getBaseItems());
+	// estado inicial: catálogo con spans guardados, filtrado por ocultas actuales
+	const [items, setItems] = useState(() => {
+		const hidden = loadHiddenSet();
+		return applySavedSpans(getBaseItems()).filter((it) => !hidden.has(it['data-id']));
+	});
 
-	// Inicial: filtra ocultas
-	const [items, setItems] = useState(base.filter((it) => !hidden.has(it['data-id'])));
+	// 🔁 Suscríbete a cambios de ocultas (Sidebar u otros tabs) y refresca al vuelo
+	useEffect(() => {
+		const refreshFromStorage = () => {
+			const hidden = loadHiddenSet();
+			const next = applySavedSpans(getBaseItems()).filter((it) => !hidden.has(it['data-id']));
+			setItems(next);
+		};
+		window.addEventListener('eut:hidden:changed', refreshFromStorage);
+		const onStorage = (e) => {
+			if (e.key === STORAGE_KEY_HIDDEN) refreshFromStorage();
+		};
+		window.addEventListener('storage', onStorage);
+		return () => {
+			window.removeEventListener('eut:hidden:changed', refreshFromStorage);
+			window.removeEventListener('storage', onStorage);
+		};
+	}, []);
 
+	// Loading (demo)
 	const [loadingIdx, setLoadingIdx] = useState(new Set());
 	const setCardLoading = (idx, on) =>
 		setLoadingIdx((prev) => {
@@ -198,6 +217,7 @@ export function BentoGridEUT() {
 		}
 	};
 
+	// Cambiar tamaño (persistente)
 	const handleToggleSize = (idx) => {
 		setItems((prev) =>
 			prev.map((it, i) => {
@@ -210,6 +230,7 @@ export function BentoGridEUT() {
 		);
 	};
 
+	// Cerrar (persistente + emite evento → Sidebar y Grid lo oyen)
 	const handleClose = (idx) => {
 		setItems((prev) => {
 			const it = prev[idx];
@@ -217,7 +238,7 @@ export function BentoGridEUT() {
 			if (id) {
 				const set = loadHiddenSet();
 				set.add(id);
-				saveHiddenSet(set); // emite evento
+				saveHiddenSet(set); // emite 'eut:hidden:changed'
 			}
 			const next = [...prev];
 			next.splice(idx, 1);
@@ -225,6 +246,7 @@ export function BentoGridEUT() {
 		});
 	};
 
+	// Botón: reabrir todas
 	const handleRestoreAll = () => {
 		saveHiddenSet(new Set()); // emite evento
 		setItems(applySavedSpans(getBaseItems()));

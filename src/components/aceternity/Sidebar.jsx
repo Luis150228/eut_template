@@ -1,16 +1,17 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Sidebar, SidebarBody, SidebarLink } from '../ui/sidebar';
-import { IconArrowLeft, IconBrandTabler, IconSettings, IconUserBolt, IconEye } from '@tabler/icons-react';
+import { IconArrowLeft, IconBrandTabler, IconSettings, IconUserBolt, IconEye, IconEyeOff } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import Dashboard from './Dashboard.jsx';
 import LogoEUT from '../images/EUTLogo';
 import FlamaSantander from '../images/FlamaSantander';
 
-// helpers compartidos del grid
+// helpers del grid
 import { getBaseItems, loadHiddenSet, saveHiddenSet, STORAGE_KEY_HIDDEN } from './BentoGrid';
 
 export function SidebarEUT() {
+	// Links normales (sin Cards aquí para evitar choques con SidebarLink)
 	const links = [
 		{ label: 'Dashboard', href: '#', icon: <IconBrandTabler className='h-5 w-5 shrink-0' /> },
 		{ label: 'Profile', href: '#', icon: <IconUserBolt className='h-5 w-5 shrink-0' /> },
@@ -19,22 +20,20 @@ export function SidebarEUT() {
 	];
 
 	const [open, setOpen] = useState(false);
+	const [hiddenOpen, setHiddenOpen] = useState(false);
 
-	// Catálogo id -> título (para mostrar nombres bonitos)
+	// Catálogo id -> título
 	const catalogMap = useMemo(() => {
 		const map = new Map();
 		getBaseItems().forEach((it) => map.set(it['data-id'], it.title));
 		return map;
 	}, []);
 
-	// Estado local de ocultas (se actualiza en tiempo real)
+	// Ocultas en vivo
 	const [hiddenIds, setHiddenIds] = useState(() => [...loadHiddenSet()]);
-
 	useEffect(() => {
 		const refresh = () => setHiddenIds([...loadHiddenSet()]);
-		// evento propio (mismo tab)
 		window.addEventListener('eut:hidden:changed', refresh);
-		// evento del storage (otros tabs/ventanas)
 		const onStorage = (e) => {
 			if (e.key === STORAGE_KEY_HIDDEN) refresh();
 		};
@@ -48,9 +47,8 @@ export function SidebarEUT() {
 	const restore = (id) => {
 		const set = loadHiddenSet();
 		set.delete(id);
-		saveHiddenSet(set); // emite evento → el grid se actualiza
-		// Refresco inmediato local (por si acaso)
-		setHiddenIds([...set]);
+		saveHiddenSet(set); // emite evento → actualiza grid y este sidebar
+		setHiddenIds([...set]); // refresco local inmediato
 	};
 
 	return (
@@ -76,40 +74,58 @@ export function SidebarEUT() {
 									link={link}
 								/>
 							))}
-						</div>
 
-						{/* Sección: Ocultas (en vivo) */}
-						<div className='mt-6'>
-							<div className='mb-2 flex items-center justify-between'>
-								<span className='text-xs uppercase tracking-wide text-[var(--muted-foreground)]'>Ocultas</span>
-								<span className='rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--muted-foreground)]'>
-									{hiddenIds.length}
-								</span>
-							</div>
+							{/* —— Fila especial “Cards” con lista colapsable —— */}
+							<div className='w-full'>
+								{/* Botón estilo link */}
+								<button
+									type='button'
+									onClick={() => setHiddenOpen((v) => !v)}
+									aria-expanded={hiddenOpen}
+									className={cn(
+										'w-full rounded-lg px-3 py-2',
+										'flex items-center justify-between gap-2',
+										'text-[var(--foreground)] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]',
+										'border border-transparent hover:border-[var(--border)] transition'
+									)}>
+									<span className='inline-flex items-center gap-2'>
+										<IconEyeOff className='h-5 w-5 shrink-0' />
+										<span className='text-sm'>Cards</span>
+									</span>
+									<span className='rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-[var(--muted-foreground)]'>
+										{hiddenIds.length}
+									</span>
+								</button>
 
-							{hiddenIds.length === 0 ? (
-								<div className='text-xs text-[var(--muted-foreground)]'>No hay tarjetas ocultas.</div>
-							) : (
-								<ul className='space-y-1'>
-									{hiddenIds.map((id) => (
-										<li key={id}>
-											<button
-												type='button'
-												onClick={() => restore(id)}
-												className={cn(
-													'w-full rounded-lg px-3 py-2 text-left',
-													'flex items-center gap-2',
-													'text-[var(--foreground)] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]',
-													'border border-transparent hover:border-[var(--border)] transition'
-												)}
-												title='Hacer visible'>
-												<IconEye className='h-4 w-4 opacity-80' />
-												<span className='truncate text-sm'>{catalogMap.get(id) || id}</span>
-											</button>
-										</li>
+								{/* Lista: solo si está abierta y hay elementos */}
+								{hiddenOpen &&
+									(hiddenIds.length === 0 ? (
+										<div className='mt-1 pl-10 pr-2 text-xs text-[var(--muted-foreground)]'>
+											No hay tarjetas ocultas.
+										</div>
+									) : (
+										<ul className='mt-1 space-y-1 pl-8 pr-2'>
+											{hiddenIds.map((id) => (
+												<li key={id}>
+													<button
+														type='button'
+														onClick={() => restore(id)}
+														className={cn(
+															'w-full rounded-lg px-3 py-2 text-left',
+															'flex items-center gap-2',
+															'text-[var(--foreground)] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]',
+															'border border-transparent hover:border-[var(--border)] transition'
+														)}
+														title='Hacer visible'>
+														<IconEye className='h-4 w-4 opacity-80' />
+														<span className='truncate text-sm'>{catalogMap.get(id) || id}</span>
+													</button>
+												</li>
+											))}
+										</ul>
 									))}
-								</ul>
-							)}
+							</div>
+							{/* ——————————————————————————————— */}
 						</div>
 					</div>
 
