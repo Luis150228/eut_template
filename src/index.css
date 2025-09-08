@@ -55,6 +55,7 @@
   --brand-red: #c51617;
   --sidebar-bg: #ffffff;
   --sidebar-fg: var(--brand-red);
+  --Backdrop: #9b9b9b;
 }
 
 html[data-theme="dark"] {
@@ -147,6 +148,7 @@ html[data-theme="dark"] {
   --sidebar-ring: oklch(0.556 0 0);
   --sidebar-bg: var(--brand-red);
   --sidebar-fg: #ffffff;
+  --Backdrop: #EC0D15;
 }
 
 @layer base {
