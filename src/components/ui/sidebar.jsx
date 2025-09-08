@@ -43,9 +43,8 @@ export const SidebarBody = (props) => (
 
 /**
  * Desktop con “hover to open”.
- * CAMBIOS:
- *  - Fondo: light = tu neutral, dark = rojo via var.
- *  - Color de texto/iconos: 1 sola variable (var(--sidebar-fg)).
+ * Fondo light = neutral; fondo dark = var(--sidebar-bg).
+ * Texto/iconos heredan var(--sidebar-fg).
  */
 export const DesktopSidebar = ({ className, children, ...props }) => {
 	const { open, animate, peekOpen, setPeekOpen } = useSidebar();
@@ -53,10 +52,11 @@ export const DesktopSidebar = ({ className, children, ...props }) => {
 
 	return (
 		<motion.aside
+			data-sidebar='rail' /* 👈 hook para el CSS de override */
 			className={cn(
-				// bg en dark ahora viene de variable roja
-				'h-full px-3 py-3 hidden md:flex md:flex-col bg-neutral-100 dark:bg-[var(--sidebar-bg)] w-[300px] shrink-0',
-				// color “currentColor” para texto+iconos
+				'hidden md:flex h-full w-[300px] shrink-0 flex-col px-3 py-3',
+				'bg-neutral-100 dark:bg-[var(--sidebar-bg)]',
+				'border border-neutral-200 dark:border-[var(--sidebar-border)]',
 				'text-[var(--sidebar-fg)]',
 				className
 			)}
@@ -71,16 +71,18 @@ export const DesktopSidebar = ({ className, children, ...props }) => {
 };
 
 /**
- * Mobile overlay (mismo criterio de color).
+ * Mobile overlay (mismo criterio de color que Desktop).
  */
 export const MobileSidebar = ({ className, children, ...props }) => {
 	const { open, setOpen } = useSidebar();
 
 	return (
 		<div
+			data-sidebar='mobilebar' /* 👈 hook para el CSS de override */
 			className={cn(
-				// top bar en mobile: mismo color que desktop
-				'h-10 px-4 py-4 flex md:hidden items-center justify-between bg-neutral-100 dark:bg-[var(--sidebar-bg)] w-full',
+				'md:hidden flex h-10 w-full items-center justify-between px-4 py-4',
+				'bg-neutral-100 dark:bg-[var(--sidebar-bg)]',
+				'border-b border-neutral-200 dark:border-[var(--sidebar-border)]',
 				'text-[var(--sidebar-fg)]',
 				className
 			)}
@@ -106,7 +108,6 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 						exit={{ x: '-100%', opacity: 0 }}
 						transition={{ duration: 0.25, ease: 'easeInOut' }}
 						className={cn(
-							// overlay en dark: rojo; en light: blanco (se ve bien con tu contenido)
 							'fixed inset-0 h-full w-full bg-white dark:bg-[var(--sidebar-bg)] p-10 z-[100] flex flex-col justify-between',
 							'text-[var(--sidebar-fg)]'
 						)}>
@@ -132,7 +133,7 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 };
 
 /**
- * Link del sidebar (texto+iconos usan currentColor => heredan var(--sidebar-fg)).
+ * Link del sidebar (iconos Tabler heredan currentColor).
  */
 export const SidebarLink = ({ link, className = '', ...props }) => {
 	const { open, animate, peekOpen } = useSidebar();
@@ -141,12 +142,7 @@ export const SidebarLink = ({ link, className = '', ...props }) => {
 	return (
 		<a
 			href={link.href}
-			className={cn(
-				'flex items-center justify-start gap-2 group/sidebar py-2',
-				// fuerza color en el enlace (iconos Tabler heredan currentColor)
-				'text-[var(--sidebar-fg)]',
-				className
-			)}
+			className={cn('flex items-center justify-start gap-2 group/sidebar py-2', 'text-[var(--sidebar-fg)]', className)}
 			{...props}>
 			{link.icon}
 			<motion.span

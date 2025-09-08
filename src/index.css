@@ -31,7 +31,7 @@
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
+  --muted: oklch(0.577 0.245 27.325);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
@@ -50,20 +50,36 @@
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
+
+  /* Sidebar (light) */
+  --sidebar-rail: #f3f4f6;
+  /* carril lateral en light */
+  --sidebar-arc-bg: #f3f4f6;
+  /* color del arco en light */
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --brand-red: #c51617;
   --sidebar-bg: #ffffff;
+  /* fondo rail en light */
   --sidebar-fg: var(--brand-red);
+
   --Backdrop: #9b9b9b;
 }
 
 html[data-theme="dark"] {
-  /* Dark */
+  /* Dark (cuando usas data-attr) */
   --app-bg: #101828;
   --app-card: #1D2939;
   --app-fg: #e2e2e2;
   color-scheme: dark;
+
+  /* 👇 FALTABAN: variables del sidebar para el modo data-theme */
+  --sidebar-rail: #0A0A0A;
+  --sidebar-arc-bg: #C51617;
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-bg: var(--brand-red);
+  --sidebar-fg: #ffffff;
+  --Backdrop: #EC0D15;
 }
 
 @layer base {
@@ -138,16 +154,22 @@ html[data-theme="dark"] {
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Sidebar (dark con clase .dark) */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
+
+  --sidebar-rail: #0A0A0A;
+  --sidebar-arc-bg: #C51617;
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --sidebar-bg: var(--brand-red);
   --sidebar-fg: #ffffff;
+
   --Backdrop: #EC0D15;
 }
 
@@ -155,6 +177,7 @@ html[data-theme="dark"] {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -167,5 +190,20 @@ html[data-theme="dark"] {
     /* y ajusta los arbitrarios como propiedades CSS */
     animation-duration: 900ms;
     animation-timing-function: cubic-bezier(.2, .8, .2, 1);
+  }
+}
+
+
+/* --- FIX: forzar colores del sidebar en dark (gana a las utilidades) --- */
+@layer utilities {
+
+  .dark .dark\:bg-neutral-800,
+  html[data-theme="dark"] .dark\:bg-neutral-800 {
+    background-color: var(--sidebar-bg) !important;
+  }
+
+  .dark .dark\:border-neutral-700,
+  html[data-theme="dark"] .dark\:border-neutral-700 {
+    border-color: var(--sidebar-border) !important;
   }
 }
