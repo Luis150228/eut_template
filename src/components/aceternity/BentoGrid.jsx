@@ -21,6 +21,10 @@ import useHiddenCards from '@/hooks/useHiddenCards';
 import useCardSpans, { nextSpan } from '@/hooks/useCardSpans';
 import EUTDynamicChart from '../charts/EUTDynamicChart';
 import EUTCallsFollowUpChart from '../charts/EUTCallsFollowUpChart';
+import { AnimatedModalDemo } from '../modals/AnimatedModalDemo';
+import UserEditForm from '../forms/UserEditForm';
+import { ModalEditUser } from '../modals/modalEditUser';
+import ImageDropzone from '../uploader/ImageDropzone';
 
 const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
@@ -321,25 +325,25 @@ export function getBaseItems() {
 			'data-id': 'realtime-dynamic',
 		},
 		{
-			title: 'Power of Communication',
-			header: <Skeleton />,
+			title: 'Modal Animado',
+			header: <AnimatedModalDemo />,
 			icon: ICON(IconTableColumn),
 			span: 'third',
-			'data-id': 'power-communication',
+			'data-id': 'modal-animado',
 		},
 		{
-			title: 'Pursuit of Knowledge',
-			header: <Skeleton />,
+			title: 'Editar Usuario',
+			header: <ModalEditUser />,
 			icon: ICON(IconArrowWaveRightUp),
 			span: 'third',
-			'data-id': 'pursuit-knowledge',
+			'data-id': 'editar-usuario',
 		},
 		{
-			title: 'Joy of Creation',
-			header: <Skeleton />,
+			title: 'Add Imagen',
+			header: <ImageDropzone />,
 			icon: ICON(IconBoxAlignTopLeft),
 			span: 'third',
-			'data-id': 'joy-creation',
+			'data-id': 'add-imagen',
 		},
 		{
 			title: 'Spirit of Adventure',
