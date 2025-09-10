@@ -25,6 +25,8 @@ import { AnimatedModalDemo } from '../modals/AnimatedModalDemo';
 import UserEditForm from '../forms/UserEditForm';
 import { ModalEditUser } from '../modals/modalEditUser';
 import ImageDropzone from '../uploader/ImageDropzone';
+import ImportIncidents from '../uploader/ImportIncidents';
+import IncidentesExport from '../filesDownloads/IncidentesExport';
 
 const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
@@ -344,6 +346,20 @@ export function getBaseItems() {
 			icon: ICON(IconBoxAlignTopLeft),
 			span: 'third',
 			'data-id': 'add-imagen',
+		},
+		{
+			title: 'CSV to JSON',
+			header: <ImportIncidents />,
+			icon: ICON(IconBoxAlignRightFilled),
+			span: 'third',
+			'data-id': 'csv-to-json',
+		},
+		{
+			title: 'JSON to XLSX',
+			header: <IncidentesExport />,
+			icon: ICON(IconBoxAlignRightFilled),
+			span: 'third',
+			'data-id': 'json-to-xlsx',
 		},
 		{
 			title: 'Spirit of Adventure',
