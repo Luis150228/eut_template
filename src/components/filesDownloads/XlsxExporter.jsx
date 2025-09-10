@@ -4,7 +4,7 @@ import ExcelJS from 'exceljs';
 import { IconDownload, IconLoader2 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
-/* -------- utils -------- */
+/* ====== utils ====== */
 function parseMysqlLikeDate(s) {
 	if (!s || typeof s !== 'string') return null;
 	const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/.exec(s);
@@ -47,91 +47,150 @@ function autosizeWidths(rows, colDefs) {
 	}
 	return widths;
 }
+function normalizeRows(data) {
+	if (!data) return [];
+	return Array.isArray(data) ? data : [data];
+}
+function inferColumns(rows) {
+	const keys = unionKeysPreserveOrder(rows);
+	return keys.map((k) => {
+		const wrap = ['description', 'comments_and_work_notes', 'short_description'].includes(k);
+		const hasDate = rows.some((r) => isDateLike(r?.[k]));
+		return { key: k, header: k, wrap, isDate: hasDate };
+	});
+}
+function safeSheetName(name, existing = new Set()) {
+	const forbidden = /[\[\]\*\/\\\?\:]/g;
+	let base =
+		String(name || 'Hoja')
+			.replace(forbidden, ' ')
+			.slice(0, 31)
+			.trim() || 'Hoja';
+	let finalName = base,
+		n = 2;
+	while (existing.has(finalName)) {
+		const suffix = ` (${n++})`;
+		finalName = base.slice(0, 31 - suffix.length) + suffix;
+	}
+	existing.add(finalName);
+	return finalName;
+}
 
-/* -------- componente -------- */
+/* ====== render helpers ====== */
+function addSheet(wb, { name, data, columns, highlightRule }) {
+	const rows = normalizeRows(data);
+	const colDefs = columns?.length ? columns : inferColumns(rows);
+
+	const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
+	ws.columns = colDefs.map((c) => ({ header: c.header ?? c.key, key: c.key }));
+
+	// Header styles
+	const brand = 'FFC51617';
+	const header = ws.getRow(1);
+	header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+	header.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+	header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: brand } };
+	header.height = 24;
+
+	// Rows with date parsing
+	const prepared = rows.map((item) => {
+		const out = {};
+		colDefs.forEach((c) => {
+			let v = item?.[c.key];
+			if (c.isDate && typeof v === 'string') {
+				const d = parseMysqlLikeDate(v);
+				if (d) v = d;
+			}
+			out[c.key] = v;
+		});
+		return out;
+	});
+	ws.addRows(prepared);
+
+	// Column formats
+	colDefs.forEach((c, idx) => {
+		const col = ws.getColumn(idx + 1);
+		if (c.isDate) col.numFmt = 'yyyy-mm-dd hh:mm:ss';
+		if (c.wrap) col.alignment = { ...col.alignment, wrapText: true, vertical: 'top' };
+	});
+
+	// Zebra + highlight
+	const okFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F4EA' } };
+	const zebra = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F8F8' } };
+	for (let r = 2; r <= ws.rowCount; r++) {
+		const row = ws.getRow(r);
+		if (r % 2 === 0) row.eachCell((cell) => (cell.fill = zebra));
+		if (typeof highlightRule === 'function') {
+			const obj = prepared[r - 2];
+			if (obj && highlightRule(obj)) row.eachCell((cell) => (cell.fill = okFill));
+		}
+		row.alignment = { vertical: 'top' };
+	}
+
+	// AutoFilter
+	if (colDefs.length) {
+		ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: colDefs.length } };
+	}
+
+	// Hair borders
+	ws.eachRow((row) => {
+		row.eachCell((cell) => {
+			cell.border = cell.border || {};
+			cell.border.right = { style: 'hair', color: { argb: 'FFDDDDDD' } };
+		});
+	});
+
+	// Widths
+	const widths = autosizeWidths(prepared, colDefs);
+	colDefs.forEach((c, i) => (ws.getColumn(i + 1).width = c.width ?? widths[i]));
+}
+
 export default function XlsxExporter({
+	// modo 1 hoja:
 	data,
-	fileName = 'export.xlsx',
-	columns, // opcional: [{ key, header?, width?, wrap?, isDate? }, ...]
+	columns,
 	highlightRule = (row) => String(row.made_sla).toLowerCase() === 'verdadero',
+
+	// modo multi-hoja:
+	sheets, // [{ name, data, columns?, highlightRule? }, ...]
+
+	fileName = 'incidentes.xlsx',
 	className,
 }) {
 	const [busy, setBusy] = React.useState(false);
 
-	const rowsInput = React.useMemo(() => {
-		if (!data) return [];
-		return Array.isArray(data) ? data : [data];
-	}, [data]);
-
-	const colDefs = React.useMemo(() => {
-		if (columns?.length) return columns;
-		const keys = unionKeysPreserveOrder(rowsInput);
-		return keys.map((k) => {
-			const wrap = ['description', 'comments_and_work_notes', 'short_description'].includes(k);
-			const hasDate = rowsInput.some((r) => isDateLike(r?.[k]));
-			return { key: k, header: k, wrap, isDate: hasDate };
-		});
-	}, [columns, rowsInput]);
+	const hasMulti = Array.isArray(sheets) && sheets.length > 0;
+	const hasSingle = !hasMulti && normalizeRows(data).length > 0;
+	const disabled = !hasMulti && !hasSingle;
 
 	async function handleDownload() {
-		if (!rowsInput.length) return;
+		if (disabled) return;
 		setBusy(true);
 		try {
 			const wb = new ExcelJS.Workbook();
 			wb.created = new Date();
 			wb.modified = new Date();
-			const ws = wb.addWorksheet('Datos', { views: [{ state: 'frozen', ySplit: 1 }] });
 
-			ws.columns = colDefs.map((c) => ({ header: c.header ?? c.key, key: c.key }));
-
-			const brand = 'FFC51617'; // ARGB
-			const header = ws.getRow(1);
-			header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-			header.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-			header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: brand } };
-			header.height = 24;
-
-			const prepared = rowsInput.map((item) => {
-				const out = {};
-				colDefs.forEach((c) => {
-					let v = item?.[c.key];
-					if (c.isDate && typeof v === 'string') {
-						const d = parseMysqlLikeDate(v);
-						if (d) v = d;
-					}
-					out[c.key] = v;
+			if (hasMulti) {
+				const used = new Set();
+				for (const s of sheets) {
+					const safeName = safeSheetName(s?.name || 'Hoja', used);
+					addSheet(wb, {
+						name: safeName,
+						data: s?.data,
+						columns: s?.columns,
+						highlightRule: s?.highlightRule,
+					});
+				}
+			} else {
+				// single
+				addSheet(wb, {
+					name: 'Datos',
+					data,
+					columns,
+					highlightRule,
 				});
-				return out;
-			});
-
-			ws.addRows(prepared);
-
-			colDefs.forEach((c, idx) => {
-				const col = ws.getColumn(idx + 1);
-				if (c.isDate) col.numFmt = 'yyyy-mm-dd hh:mm:ss';
-				if (c.wrap) col.alignment = { ...col.alignment, wrapText: true, vertical: 'top' };
-			});
-
-			const okFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F4EA' } };
-			const zebra = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F8F8' } };
-			for (let r = 2; r <= ws.rowCount; r++) {
-				const row = ws.getRow(r);
-				if (r % 2 === 0) row.eachCell((cell) => (cell.fill = zebra));
-				const obj = prepared[r - 2];
-				if (obj && highlightRule(obj)) row.eachCell((cell) => (cell.fill = okFill));
-				row.alignment = { vertical: 'top' };
 			}
-
-			ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: colDefs.length } };
-			ws.eachRow((row) => {
-				row.eachCell((cell) => {
-					cell.border = cell.border || {};
-					cell.border.right = { style: 'hair', color: { argb: 'FFDDDDDD' } };
-				});
-			});
-
-			const widths = autosizeWidths(prepared, colDefs);
-			colDefs.forEach((c, i) => (ws.getColumn(i + 1).width = c.width ?? widths[i]));
 
 			const buf = await wb.xlsx.writeBuffer();
 			const blob = new Blob([buf], {
@@ -152,7 +211,7 @@ export default function XlsxExporter({
 		<button
 			type='button'
 			onClick={handleDownload}
-			disabled={busy || !rowsInput.length}
+			disabled={busy || disabled}
 			aria-busy={busy ? 'true' : 'false'}
 			aria-disabled={busy ? 'true' : 'false'}
 			className={cn(
@@ -161,7 +220,7 @@ export default function XlsxExporter({
 				busy && 'opacity-60 pointer-events-none',
 				className
 			)}
-			title='Descargar XLSX'>
+			title={hasMulti ? 'Descargar XLSX (múltiples hojas)' : 'Descargar XLSX'}>
 			{busy ? (
 				<>
 					<IconLoader2 className='h-4 w-4 animate-spin' />
@@ -170,7 +229,7 @@ export default function XlsxExporter({
 			) : (
 				<>
 					<IconDownload className='h-4 w-4' />
-					Descargar XLSX
+					{hasMulti ? 'Descargar XLSX (multi)' : 'Descargar XLSX'}
 				</>
 			)}
 		</button>

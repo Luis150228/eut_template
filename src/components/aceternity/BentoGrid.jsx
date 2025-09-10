@@ -27,6 +27,7 @@ import { ModalEditUser } from '../modals/modalEditUser';
 import ImageDropzone from '../uploader/ImageDropzone';
 import ImportIncidents from '../uploader/ImportIncidents';
 import IncidentesExport from '../filesDownloads/IncidentesExport';
+import ExportBySheets from '../filesDownloads/IncidensExportSheets';
 
 const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
@@ -360,6 +361,13 @@ export function getBaseItems() {
 			icon: ICON(IconBoxAlignRightFilled),
 			span: 'third',
 			'data-id': 'json-to-xlsx',
+		},
+		{
+			title: 'JSON to XLSX Sheets',
+			header: <ExportBySheets />,
+			icon: ICON(IconBoxAlignRightFilled),
+			span: 'third',
+			'data-id': 'json-to-xlsx-sheets',
 		},
 		{
 			title: 'Spirit of Adventure',
