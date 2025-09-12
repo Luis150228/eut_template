@@ -288,6 +288,7 @@ export function getBaseItems() {
 			),
 			span: 'half-tall',
 			'data-id': 'stock-almacen',
+			cardType: 'reporte',
 		},
 		{
 			title: 'Grafica de Ejemplo Apache ECharts',
@@ -307,6 +308,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconFileBroken} />,
 			span: 'half-tall',
 			'data-id': 'grafica-echarts',
+			cardType: 'reporte',
 		},
 		{
 			title: 'Tabla de Ejemplo',
@@ -314,6 +316,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconSignature} />,
 			span: 'full-tall',
 			'data-id': 'tabla-ejemplo',
+			cardType: 'reporte',
 		},
 		{
 			title: 'Formulario de Ejemplo',
@@ -321,6 +324,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconSignature} />,
 			span: 'half',
 			'data-id': 'formulario-ejemplo',
+			cardType: 'formulario',
 		},
 		{
 			header: (
@@ -332,6 +336,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconActivity} />,
 			span: 'half-tall',
 			'data-id': 'realtime-dynamic',
+			cardType: 'reporte',
 		},
 		{
 			title: 'Modal Animado',
@@ -339,6 +344,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconTableColumn} />,
 			span: 'third',
 			'data-id': 'modal-animado',
+			cardType: 'reporte',
 		},
 		{
 			title: 'Editar Usuario',
@@ -346,6 +352,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconArrowWaveRightUp} />,
 			span: 'third',
 			'data-id': 'editar-usuario',
+			cardType: 'formulario',
 		},
 		{
 			title: 'Add Imagen',
@@ -353,6 +360,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconBoxAlignTopLeft} />,
 			span: 'third',
 			'data-id': 'add-imagen',
+			cardType: 'dataupdate',
 		},
 		{
 			title: 'CSV to JSON',
@@ -360,6 +368,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconTableColumn} />,
 			span: 'third',
 			'data-id': 'csv-to-json',
+			cardType: 'dataupdate',
 		},
 		{
 			title: 'JSON to XLSX',
@@ -367,6 +376,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconBoxAlignRightFilled} />,
 			span: 'third',
 			'data-id': 'json-to-xlsx',
+			cardType: 'reporte',
 		},
 		{
 			title: 'JSON to XLSX Sheets',
@@ -374,6 +384,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconBoxAlignRightFilled} />,
 			span: 'third',
 			'data-id': 'json-to-xlsx-sheets',
+			cardType: 'reporte',
 		},
 		{
 			title: 'Spirit of Adventure',
@@ -381,6 +392,7 @@ export function getBaseItems() {
 			icon: <IconOrLink Icon={IconBoxAlignRightFilled} />,
 			span: 'third',
 			'data-id': 'spirit-adventure',
+			cardType: 'reporte',
 		},
 	];
 }
@@ -416,8 +428,8 @@ export function BentoGridEUT() {
 
 	return (
 		<>
-			<div className='mt-4 flex items-center justify-between gap-3'>
-				<button
+			{/* <div className='mt-4 flex items-center justify-between gap-3'> */}
+			{/* <button
 					onClick={loaderOnElement}
 					className='rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-[var(--foreground)]'>
 					Actualizar element
@@ -426,11 +438,16 @@ export function BentoGridEUT() {
 					onClick={clearAll}
 					className='rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--foreground)]'>
 					Reabrir cerradas
-				</button>
-			</div>
+				</button> */}
+			{/* </div> */}
 
 			<BentoGrid
-				className={cn('w-full', 'grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[12rem]', 'grid-flow-row-dense')}>
+				className={cn(
+					'w-full',
+					'grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[12rem]',
+					'grid-flow-row-dense',
+					'mt-15'
+				)}>
 				{items.map((item, i) => {
 					const { span, className: cls, header, title, description, icon, ...dataRest } = item;
 					const id = item['data-id'];

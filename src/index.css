@@ -92,6 +92,7 @@ html[data-theme="dark"] {
   --cn-menu: #0f1724;
   --cn-button-bg: #c51617;
   --cn-button-fg: #ffffff;
+  --color-neutral-900: unset;
 }
 
 @layer base {
@@ -218,4 +219,31 @@ html[data-theme="dark"] {
   html[data-theme="dark"] .dark\:border-neutral-700 {
     border-color: var(--sidebar-border) !important;
   }
+}
+
+/* Enter animation for bento items */
+.bento-item.enter {
+  opacity: 0;
+  transform: translateY(10px) scale(.995);
+}
+
+.bento-item.enter.enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: transform 300ms var(--theme-ease, cubic-bezier(.2, .8, .2, 1)), opacity 300ms var(--theme-ease, cubic-bezier(.2, .8, .2, 1));
+}
+
+/* Bento item enter/exit animations previously added */
+.bento-item {
+  transition: transform 300ms var(--theme-ease, cubic-bezier(.2, .8, .2, 1)), opacity 300ms var(--theme-ease);
+  will-change: transform, opacity;
+}
+
+.bento-item.closing {
+  opacity: 0 !important;
+  transform: scale(.98) translateY(8px) !important;
+  height: auto;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  margin: 0;
 }

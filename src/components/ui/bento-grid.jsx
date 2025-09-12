@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { IconMaximize, IconX } from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
 
 export const BentoGrid = ({ className, children }) => {
 	// Grid ancho completo, sin max-w que estrangule
@@ -11,13 +12,87 @@ export const BentoGrid = ({ className, children }) => {
 export const BentoGridItem = ({ className, title, description, header, icon, onToggleSize, onClose, ...rest }) => {
 	const dataAttrs = pickDataAria(rest);
 
+	// cambios mínimos: estados locales para animar entrada y cierre
+	const [isClosing, setIsClosing] = useState(false);
+	const [isEntering, setIsEntering] = useState(true);
+	const entryRef = useRef(null);
+
+	// handleClose: marca cierre y llama a onClose() despues de que termine la transición
+	// reemplaza la función handleClose existente por esta
+	const handleClose = () => {
+		if (isClosing) return;
+		const el = entryRef.current;
+
+		// si no hay ref, fallback inmediato
+		if (!el) {
+			setIsClosing(true);
+			if (typeof onClose === 'function') onClose();
+			return;
+		}
+
+		let called = false;
+		const cleanup = () => {
+			if (called) return;
+			called = true;
+			el.removeEventListener('transitionend', onTrans);
+			clearTimeout(fb);
+			// mantener el estado para consistencia visual si aún no está true
+			setIsClosing(true);
+			if (typeof onClose === 'function') onClose();
+		};
+
+		const onTrans = (ev) => {
+			// asegurar que es el elemento principal el que disparó la transición
+			if (ev.target !== el) return;
+			if (ev.propertyName === 'opacity' || ev.propertyName === 'transform') {
+				cleanup();
+			}
+		};
+
+		// agregar listener ANTES de cambiar clases
+		el.addEventListener('transitionend', onTrans);
+
+		// forzamos un reflow pequeño para asegurar que la clase provoque la transición
+		void el.offsetWidth;
+
+		// aplicar la clase de cierre directamente al DOM (no depender solo de setState)
+		el.classList.add('closing');
+
+		// mantener el estado también (opcional, pero útil si otros render dependen de él)
+		setIsClosing(true);
+
+		// fallback por si transitionend no se dispara (duración > CSS por seguridad)
+		const fb = setTimeout(() => {
+			cleanup();
+		}, 420);
+	};
+
+	// trigger enter-active en mount para que la transición CSS de entrada se ejecute
+	useEffect(() => {
+		const el = entryRef.current;
+		if (!el) return;
+		let raf = requestAnimationFrame(() => {
+			el.classList.add('enter-active');
+			setTimeout(() => {
+				setIsEntering(false);
+				el.classList.remove('enter');
+				el.classList.remove('enter-active');
+			}, 320);
+		});
+		return () => cancelAnimationFrame(raf);
+	}, []);
+
 	return (
 		<div
 			{...dataAttrs}
+			ref={entryRef}
 			className={cn(
 				'group/bento relative row-span-1 flex min-h-0 flex-col',
 				'rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 pb-12',
 				'transition duration-200 hover:shadow-xl shadow-sm',
+				// añadidos mínimos para el control de animaciones
+				isEntering ? 'enter' : '',
+				isClosing ? 'closing' : '',
 				className
 			)}>
 			{/* HEADER → tiene prioridad de espacio */}
@@ -52,7 +127,7 @@ export const BentoGridItem = ({ className, title, description, header, icon, onT
 						</IconButton>
 						<IconButton
 							aria-label='Cerrar'
-							onClick={onClose}>
+							onClick={handleClose}>
 							<IconX className='h-4 w-4' />
 						</IconButton>
 					</div>
