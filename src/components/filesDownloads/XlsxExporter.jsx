@@ -3,8 +3,9 @@ import React from 'react';
 import ExcelJS from 'exceljs';
 import { IconDownload, IconLoader2 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
+import FlamaSantanderLoader from '../images/FlamaSantanderLoader';
 
-/* ====== utils ====== */
+/* ====== utils (sin cambios) ====== */
 function parseMysqlLikeDate(s) {
 	if (!s || typeof s !== 'string') return null;
 	const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/.exec(s);
@@ -76,7 +77,7 @@ function safeSheetName(name, existing = new Set()) {
 	return finalName;
 }
 
-/* ====== render helpers ====== */
+/* ====== render helpers (sin cambios) ====== */
 function addSheet(wb, { name, data, columns, highlightRule }) {
 	const rows = normalizeRows(data);
 	const colDefs = columns?.length ? columns : inferColumns(rows);
@@ -145,26 +146,47 @@ function addSheet(wb, { name, data, columns, highlightRule }) {
 	colDefs.forEach((c, i) => (ws.getColumn(i + 1).width = c.width ?? widths[i]));
 }
 
-export default function XlsxExporter({
-	// modo 1 hoja:
-	data,
-	columns,
-	highlightRule = (row) => String(row.made_sla).toLowerCase() === 'verdadero',
+/* ====== componente ====== */
+const XlsxExporter = React.forwardRef(function XlsxExporter(
+	{
+		// modo 1 hoja:
+		data,
+		columns,
+		highlightRule = (row) => String(row.made_sla).toLowerCase() === 'verdadero',
 
-	// modo multi-hoja:
-	sheets, // [{ name, data, columns?, highlightRule? }, ...]
+		// modo multi-hoja:
+		sheets, // [{ name, data, columns?, highlightRule? }, ...]
 
-	fileName = 'incidentes.xlsx',
-	className,
-}) {
+		fileName = 'incidentes.xlsx',
+		className,
+		// callbacks opcionales
+		onStart,
+		onDone,
+	},
+	ref
+) {
 	const [busy, setBusy] = React.useState(false);
 
 	const hasMulti = Array.isArray(sheets) && sheets.length > 0;
 	const hasSingle = !hasMulti && normalizeRows(data).length > 0;
 	const disabled = !hasMulti && !hasSingle;
 
+	// Exponer método export() si algún padre quiere controlarlo por ref
+	React.useImperativeHandle(
+		ref,
+		() => ({
+			export: async () => {
+				// permite que quien llame espere la finalización
+				await handleDownload();
+			},
+		}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[]
+	);
+
 	async function handleDownload() {
 		if (disabled) return;
+		onStart?.();
 		setBusy(true);
 		try {
 			const wb = new ExcelJS.Workbook();
@@ -202,36 +224,62 @@ export default function XlsxExporter({
 			a.download = fileName;
 			a.click();
 			URL.revokeObjectURL(url);
+		} catch (err) {
+			// re-lanzar o loggear según prefieras
+			console.error('XlsxExporter error:', err);
+			throw err;
 		} finally {
 			setBusy(false);
+			onDone?.();
 		}
 	}
 
 	return (
-		<button
-			type='button'
-			onClick={handleDownload}
-			disabled={busy || disabled}
-			aria-busy={busy ? 'true' : 'false'}
-			aria-disabled={busy ? 'true' : 'false'}
-			className={cn(
-				'inline-flex items-center gap-2 rounded-md border border-[var(--border)]',
-				'bg-[var(--card)] px-3 py-1.5 text-sm shadow-sm hover:bg-black/5 dark:hover:bg-white/10',
-				busy && 'opacity-60 pointer-events-none',
-				className
+		<>
+			<button
+				type='button'
+				onClick={handleDownload}
+				disabled={busy || disabled}
+				aria-busy={busy ? 'true' : 'false'}
+				aria-disabled={busy ? 'true' : 'false'}
+				className={cn(
+					'inline-flex items-center gap-2 rounded-md border border-[var(--border)]',
+					'bg-[var(--card)] px-3 py-1.5 text-sm shadow-sm hover:bg-black/5 dark:hover:bg-white/10',
+					busy && 'opacity-60 pointer-events-none',
+					className
+				)}
+				title={hasMulti ? 'Descargar XLSX (múltiples hojas)' : 'Descargar XLSX'}>
+				{busy ? (
+					<>
+						<IconLoader2 className='h-4 w-4 animate-spin' />
+						Generando…
+					</>
+				) : (
+					<>
+						<IconDownload className='h-4 w-4' />
+						{hasMulti ? 'Descargar XLSX (multi)' : 'Descargar XLSX'}
+					</>
+				)}
+			</button>
+
+			{busy && (
+				<div
+					className='fixed inset-0 z-50 flex flex-col items-center justify-center
+					bg-[rgb(var(--card-rgb,17 18 19)/0.7)] backdrop-blur-md p-6'
+					role='alert'
+					aria-live='polite'
+					aria-busy='true'>
+					<FlamaSantanderLoader
+						size={160}
+						strokeWidth={5}
+						duration={2.2}
+						strokeColor='var(--sidebar-ring)'
+					/>
+					<p className='mt-4 text-sm text-[var(--muted-foreground,#c7c7c7)]'>Generando archivo…</p>
+				</div>
 			)}
-			title={hasMulti ? 'Descargar XLSX (múltiples hojas)' : 'Descargar XLSX'}>
-			{busy ? (
-				<>
-					<IconLoader2 className='h-4 w-4 animate-spin' />
-					Generando…
-				</>
-			) : (
-				<>
-					<IconDownload className='h-4 w-4' />
-					{hasMulti ? 'Descargar XLSX (multi)' : 'Descargar XLSX'}
-				</>
-			)}
-		</button>
+		</>
 	);
-}
+});
+
+export default XlsxExporter;

@@ -8,7 +8,16 @@ import { Modal, ModalBody, ModalContent, ModalFooter, ModalTrigger, ModalClose }
 export default function CsvCleaner({
 	className,
 	accept = '.csv,text/csv',
-	dateColumns = ['fecha', 'created_at', 'updated_at', 'fecha_hora'],
+	dateColumns = [
+		'fecha',
+		'created_at',
+		'updated_at',
+		'fecha_hora',
+		'opened_at',
+		'sys_updated_on',
+		'sys_created_on',
+		'resuelto',
+	],
 	escapeForSql = false,
 	onResult, // (rows) => void
 }) {

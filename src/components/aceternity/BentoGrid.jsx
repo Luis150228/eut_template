@@ -28,8 +28,9 @@ import ImageDropzone from '../uploader/ImageDropzone';
 import ImportIncidents from '../uploader/ImportIncidents';
 import IncidentesExport from '../filesDownloads/IncidentesExport';
 import ExportBySheets from '../filesDownloads/IncidensExportSheets';
+import ImportCSV from '../uploader/ImportCSV';
+import { IconOrLink } from '../images/IconOrLink';
 
-const ICON = (Comp) => <Comp className='h-4 w-4 text-[var(--brand-red)]' />;
 const Skeleton = () => (
 	<div className='h-full w-full min-h-[6rem] rounded-xl bg-gradient-to-br from-neutral-200 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800' />
 );
@@ -279,7 +280,12 @@ export function getBaseItems() {
 			title: 'Stock de Almacen',
 			description: 'Stock de equipos asignados a mi almacén.',
 			header: <Skeleton />,
-			icon: ICON(IconClipboardCopy),
+			icon: (
+				<IconOrLink
+					Icon={IconClipboardCopy}
+					href='https://eutranet.eutranet.com'
+				/>
+			),
 			span: 'half-tall',
 			'data-id': 'stock-almacen',
 		},
@@ -298,21 +304,21 @@ export function getBaseItems() {
 					className='h-full p-0 border-0 bg-transparent shadow-none'
 				/>
 			),
-			icon: ICON(IconFileBroken),
+			icon: <IconOrLink Icon={IconFileBroken} />,
 			span: 'half-tall',
 			'data-id': 'grafica-echarts',
 		},
 		{
 			title: 'Tabla de Ejemplo',
 			header: <TablaDraw />,
-			icon: ICON(IconSignature),
+			icon: <IconOrLink Icon={IconSignature} />,
 			span: 'full-tall',
 			'data-id': 'tabla-ejemplo',
 		},
 		{
 			title: 'Formulario de Ejemplo',
 			header: <FlowbiteForm />,
-			icon: ICON(IconSignature),
+			icon: <IconOrLink Icon={IconSignature} />,
 			span: 'half',
 			'data-id': 'formulario-ejemplo',
 		},
@@ -323,56 +329,56 @@ export function getBaseItems() {
 					className='h-full'
 				/>
 			),
-			icon: ICON(IconActivity),
+			icon: <IconOrLink Icon={IconActivity} />,
 			span: 'half-tall',
 			'data-id': 'realtime-dynamic',
 		},
 		{
 			title: 'Modal Animado',
 			header: <AnimatedModalDemo />,
-			icon: ICON(IconTableColumn),
+			icon: <IconOrLink Icon={IconTableColumn} />,
 			span: 'third',
 			'data-id': 'modal-animado',
 		},
 		{
 			title: 'Editar Usuario',
 			header: <ModalEditUser />,
-			icon: ICON(IconArrowWaveRightUp),
+			icon: <IconOrLink Icon={IconArrowWaveRightUp} />,
 			span: 'third',
 			'data-id': 'editar-usuario',
 		},
 		{
 			title: 'Add Imagen',
 			header: <ImageDropzone />,
-			icon: ICON(IconBoxAlignTopLeft),
+			icon: <IconOrLink Icon={IconBoxAlignTopLeft} />,
 			span: 'third',
 			'data-id': 'add-imagen',
 		},
 		{
 			title: 'CSV to JSON',
-			header: <ImportIncidents />,
-			icon: ICON(IconBoxAlignRightFilled),
+			header: <ImportCSV fileName='Tareas' />,
+			icon: <IconOrLink Icon={IconTableColumn} />,
 			span: 'third',
 			'data-id': 'csv-to-json',
 		},
 		{
 			title: 'JSON to XLSX',
 			header: <IncidentesExport />,
-			icon: ICON(IconBoxAlignRightFilled),
+			icon: <IconOrLink Icon={IconBoxAlignRightFilled} />,
 			span: 'third',
 			'data-id': 'json-to-xlsx',
 		},
 		{
 			title: 'JSON to XLSX Sheets',
 			header: <ExportBySheets />,
-			icon: ICON(IconBoxAlignRightFilled),
+			icon: <IconOrLink Icon={IconBoxAlignRightFilled} />,
 			span: 'third',
 			'data-id': 'json-to-xlsx-sheets',
 		},
 		{
 			title: 'Spirit of Adventure',
 			header: <Skeleton />,
-			icon: ICON(IconBoxAlignRightFilled),
+			icon: <IconOrLink Icon={IconBoxAlignRightFilled} />,
 			span: 'third',
 			'data-id': 'spirit-adventure',
 		},
